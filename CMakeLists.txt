@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.28)
 set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 
@@ -23,7 +22,7 @@ target_compile_definitions(main_openblas PRIVATE USE_OPENBLAS)
 
 # Netlib CBLAS
 add_executable(main_netlib ${CPU_FILE})
-target_link_libraries(main_netlib PUBLIC cblas blas)
+target_link_libraries(main_netlib PUBLIC /usr/lib/x86_64-linux-gnu/blas/libblas.so)
 target_compile_definitions(main_netlib PRIVATE USE_NETLIB)
 
 # cuBlas

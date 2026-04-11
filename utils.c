@@ -22,7 +22,7 @@ double timer(void) {
     return (double)ts.tv_sec + (double)ts.tv_nsec * 1.0e-9;
 }
 
-void d_gen_SPD(double *A, long long const n, double const e) {
+void d_gen_SPD(double *A, long long const n, double k) {
     double *matrix = malloc(n * n * sizeof(double)), *result = malloc(n * n * sizeof(double));
     for (long long i = 0; i < n * n; i++) {
         matrix[i] = drand48() - 0.5;
@@ -32,7 +32,8 @@ void d_gen_SPD(double *A, long long const n, double const e) {
     cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasTrans, n, n, n, 1.0, matrix,
         n, matrix, n, 0.0, result, n);
 
-    double *vec = malloc(n * sizeof(double));
+    k = k > 1 ? k : 1 + 1e-10;
+    double *vec = malloc(n * sizeof(double)), e = (double)n / (3 * (k - 1));
     for (long long i = 0; i < n; i++) {
         vec[i] = e;
     }

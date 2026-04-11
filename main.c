@@ -73,18 +73,25 @@ int main(int argc, char **argv) {
         verbose = atoi(argv[3]);
     }
 
+    double const start_gen_SPD = timer();
     double *A = malloc(sizeof(double) * n * (n + 1) / 2);
-    d_gen_SPD(A, n, (double)n / 3);
+    d_gen_SPD(A, n, 10);
+    double const end_gen_SPD = timer();
     if (verbose) {
         printf("SPD A matrix:\n");
         d_print_SPD_matrix(A, n);
     }
+    printf("\ngen SPD timer: %.5fs\n", end_gen_SPD - start_gen_SPD);
+
+    double const start_gen_vec = timer();
     double *b = malloc(sizeof(double) * n);
     d_gen_vec(b, n);
+    double const end_gen_vec = timer();
     if (verbose) {
         printf("\nb vector:\n");
         d_print_vec(b, n);
     }
+    printf("\ngen b vector timer: %.5fs\n", end_gen_vec - start_gen_vec);
     double *x = malloc(sizeof(double) * n);
 
     double const start = timer();
@@ -94,7 +101,7 @@ int main(int argc, char **argv) {
         printf("\nsol. x vector:\n");
         d_print_vec(x, n);
     }
-    printf("\ntimer: %.5fs, iter: %lld\n", end - start, iter);
+    printf("\nsteepest_descent timer: %.5fs, iter: %lld\n", end - start, iter);
 
     d_save_SPD_system(A, n, b, x, filename);
     printf("\nprecision linear system is save into `%s`.", filename);

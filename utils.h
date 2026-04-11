@@ -4,9 +4,9 @@
  * Generate a row major SPD n*n matrix with packed form
  * @param A data desc
  * @param n matrix dim
- * @param e eigenvalue bais. larger e imply smaller condition number of A
+ * @param k condition approximation, must greater than 1
  */
-void d_gen_SPD(double *A, long long n, double e);
+void d_gen_SPD(double *A, long long n, double k);
 
 /**
  * print a packed form SPD matrix
