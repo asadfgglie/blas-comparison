@@ -138,7 +138,7 @@ int main(int const argc, char **argv) {
         printf("\nsol. x vector:\n");
         d_print_vec(x, n);
     }
-    printf("\ntimer: %.5fs, iter: %lld\n", end - start, iter);
+    printf("\nsteepest_descent timer (GPU): %.5fs, iter: %lld\n", end - start, iter);
 
     d_save_SPD_system(A, n, b, x, filename);
     printf("\nprecision linear system is save into `%s`.\n", filename);
