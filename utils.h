@@ -4,7 +4,7 @@
  * Generate a row major SPD n*n matrix with packed form
  * @param A data desc
  * @param n matrix dim
- * @param k condition approximation, must greater than 1
+ * @param k condition number, must greater than 1
  */
 void d_gen_SPD(double *A, long long n, double k);
 
