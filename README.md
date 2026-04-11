@@ -79,8 +79,12 @@ The following benchmarks were conducted on a **$4000 \times 4000$** dimensional 
 The project is built using CMake and Ninja. Ensure you have the necessary BLAS libraries, CUDA toolkit, and compilers installed on your system.
 
 ```bash
+# Install Ninja if you don't have it (Ubuntu/Debian)
+sudo apt-get install ninja-build
+
+# Configure and build
 cmake -DCMAKE_BUILD_TYPE=Release -G Ninja -S . -B cmake-build-release
-cmake --build cmake-build-release -j 14
+cmake --build cmake-build-release
 ```
 
 ### Usage
