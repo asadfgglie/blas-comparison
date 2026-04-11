@@ -57,8 +57,8 @@ long long d_steepest_descent(double const *matrix, long long const n, double con
     return iter;
 }
 
-int main(int argc, char **argv) {
-    srand48((unsigned int)time(NULL));
+int main(int const argc, char **argv) {
+    srand48(time(NULL));
 
     char *filename = "./result.txt";
     long long n = 10;
@@ -92,6 +92,7 @@ int main(int argc, char **argv) {
         d_print_vec(b, n);
     }
     printf("\ngen b vector timer: %.5fs\n", end_gen_vec - start_gen_vec);
+
     double *x = malloc(sizeof(double) * n);
 
     double const start = timer();

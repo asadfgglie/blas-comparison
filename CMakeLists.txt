@@ -43,4 +43,6 @@ target_link_libraries(main_netlib PUBLIC /usr/lib/x86_64-linux-gnu/blas/libblas.
 target_compile_definitions(main_netlib PRIVATE USE_NETLIB)
 
 # cuBlas
-add_executable(main_cu main.cu)
+add_executable(main_cu main.cu utils.c utils.h)
+target_link_libraries(main_cu PUBLIC openblas cublas)
+target_compile_definitions(main_cu PRIVATE USE_OPENBLAS)
