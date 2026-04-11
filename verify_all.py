@@ -51,7 +51,7 @@ def verify_implementations():
                 print("----------------------------\n")
                 all_passed = False
             else:
-                print(f"{exe}: Passed verification!")
+                print(f"Passed verification!")
 
         except subprocess.CalledProcessError as e:
             print(f"{exe}: Failed to run checking script.\n{e.stderr}")
