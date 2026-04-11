@@ -22,6 +22,7 @@ target_compile_definitions(main_openblas PRIVATE USE_OPENBLAS)
 
 # single thread & process Intel oneMKL
 add_executable(main_oneMKL_one_thread_process ${CPU_FILE})
+target_include_directories(main_oneMKL_one_thread_process PUBLIC /opt/intel/oneapi/mkl/latest/include)
 target_link_libraries(main_oneMKL_one_thread_process PUBLIC
     -Wl,--start-group
     /opt/intel/oneapi/mkl/latest/lib/libmkl_intel_ilp64.so
