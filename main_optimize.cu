@@ -191,21 +191,21 @@ int main(int const argc, char **argv) {
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&ms, start, stop);
-    printf("\ngen SPD timer (GPU): %.5fs\n", ms / 1000.0);
+    printf("\ngen SPD timer (GPU): %.17fs\n", static_cast<double>(ms) / 1000.0);
 
     cudaEventRecord(start);
     d_gen_vec_gpu(curandG, d_b, n);
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&ms, start, stop);
-    printf("\ngen b vector timer (GPU): %.5fs\n", ms / 1000.0);
+    printf("\ngen b vector timer (GPU): %.17fs\n", static_cast<double>(ms) / 1000.0);
 
     cudaEventRecord(start);
     long long const iter = d_steepest_descent_cuda_opt(cublasH, d_A, n, d_b, d_x, 1e-10);
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     cudaEventElapsedTime(&ms, start, stop);
-    printf("\nsteepest_descent timer (GPU): %.5fs, iter: %lld\n", ms / 1000.0, iter);
+    printf("\nsteepest_descent timer (GPU): %.17fs, iter: %lld\n", static_cast<double>(ms) / 1000.0, iter);
 
     // download and Save
     auto *h_A = static_cast<double *>(malloc(packed_size));

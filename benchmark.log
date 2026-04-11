@@ -1,0 +1,288 @@
+=== main_cu 100 ===
+
+gen SPD timer: 0.00462816300569102s
+
+gen b vector timer: 0.00000087000080384s
+
+steepest_descent timer (GPU): 0.39113992897910066s, iter: 113
+
+precision linear system is save into `./result.txt`.
+
+
+=== main_netlib 100 ===
+
+gen SPD timer: 0.00040062100742944s
+
+gen b vector timer: 0.00000053900294006s
+
+steepest_descent timer: 0.00056965299881995s, iter: 113
+
+precision linear system is save into `./result.txt`.
+
+=== main_oneMKL 100 ===
+
+gen SPD timer: 0.01144063900574110s
+
+gen b vector timer: 0.00000087401713245s
+
+steepest_descent timer: 0.00029619902488776s, iter: 113
+
+precision linear system is save into `./result.txt`.
+
+=== main_oneMKL_one_thread_process 100 ===
+
+gen SPD timer: 0.00159927800996229s
+
+gen b vector timer: 0.00000080099562183s
+
+steepest_descent timer: 0.00017946900334209s, iter: 113
+
+precision linear system is save into `./result.txt`.
+
+=== main_openblas 100 ===
+
+gen SPD timer: 0.01068577400292270s
+
+gen b vector timer: 0.00000287301372737s
+
+steepest_descent timer: 0.00157241700799204s, iter: 113
+
+precision linear system is save into `./result.txt`.
+
+=== main_openblas_one_thread_process 100 ===
+
+gen SPD timer: 0.00063544599106535s
+
+gen b vector timer: 0.00000078100129031s
+
+steepest_descent timer: 0.00056677899556234s, iter: 113
+
+precision linear system is save into `./result.txt`.
+
+=== main_optimize 100 ===
+
+gen SPD timer (GPU): 0.02164019203186035s
+
+gen b vector timer (GPU): 0.00000780799984932s
+
+steepest_descent timer (GPU): 0.03086307144165039s, iter: 114
+
+precision linear system is save into `./result.txt`.
+
+
+=== main_cu 500 ===
+
+gen SPD timer: 0.01191578697762452s
+
+gen b vector timer: 0.00000526802614331s
+
+steepest_descent timer (GPU): 0.37150824599666521s, iter: 118
+
+precision linear system is save into `./result.txt`.
+
+
+=== main_netlib 500 ===
+
+gen SPD timer: 0.05480119099956937s
+
+gen b vector timer: 0.00000376399839297s
+
+steepest_descent timer: 0.01323389299795963s, iter: 118
+
+precision linear system is save into `./result.txt`.
+
+=== main_oneMKL 500 ===
+
+gen SPD timer: 0.02445913999690674s
+
+gen b vector timer: 0.00000537501182407s
+
+steepest_descent timer: 0.00511289402493276s, iter: 118
+
+precision linear system is save into `./result.txt`.
+
+=== main_oneMKL_one_thread_process 500 ===
+
+gen SPD timer: 0.00848434201907367s
+
+gen b vector timer: 0.00000312199699692s
+
+steepest_descent timer: 0.00482149102026597s, iter: 116
+
+precision linear system is save into `./result.txt`.
+
+=== main_openblas 500 ===
+
+gen SPD timer: 0.00869260099716485s
+
+gen b vector timer: 0.00000490000820719s
+
+steepest_descent timer: 0.00915097698452882s, iter: 116
+
+precision linear system is save into `./result.txt`.
+
+=== main_openblas_one_thread_process 500 ===
+
+gen SPD timer: 0.00807400399935432s
+
+gen b vector timer: 0.00000467500649393s
+
+steepest_descent timer: 0.00676863300031982s, iter: 116
+
+precision linear system is save into `./result.txt`.
+
+=== main_optimize 500 ===
+
+gen SPD timer (GPU): 0.02430054473876953s
+
+gen b vector timer (GPU): 0.00002774400077760s
+
+steepest_descent timer (GPU): 0.03193593597412109s, iter: 116
+
+precision linear system is save into `./result.txt`.
+
+
+=== main_cu 1000 ===
+
+gen SPD timer: 0.02912957197986543s
+
+gen b vector timer: 0.00000829499913380s
+
+steepest_descent timer (GPU): 0.37957979799830355s, iter: 118
+
+precision linear system is save into `./result.txt`.
+
+
+=== main_netlib 1000 ===
+
+gen SPD timer: 0.47940691400435753s
+
+gen b vector timer: 0.00000587699469179s
+
+steepest_descent timer: 0.06014640501234680s, iter: 118
+
+precision linear system is save into `./result.txt`.
+
+=== main_oneMKL 1000 ===
+
+gen SPD timer: 0.04392807898693718s
+
+gen b vector timer: 0.00001571400207467s
+
+steepest_descent timer: 0.01999149197945371s, iter: 118
+
+precision linear system is save into `./result.txt`.
+
+=== main_oneMKL_one_thread_process 1000 ===
+
+gen SPD timer: 0.04434104298707098s
+
+gen b vector timer: 0.00000588499824516s
+
+steepest_descent timer: 0.01769477900234051s, iter: 118
+
+precision linear system is save into `./result.txt`.
+
+=== main_openblas 1000 ===
+
+gen SPD timer: 0.06726642901776358s
+
+gen b vector timer: 0.00025462501798756s
+
+steepest_descent timer: 0.10367347701685503s, iter: 118
+
+precision linear system is save into `./result.txt`.
+
+=== main_openblas_one_thread_process 1000 ===
+
+gen SPD timer: 0.04450387699762359s
+
+gen b vector timer: 0.00000749202445149s
+
+steepest_descent timer: 0.03127893499913625s, iter: 118
+
+precision linear system is save into `./result.txt`.
+
+=== main_optimize 1000 ===
+
+gen SPD timer (GPU): 0.03048313522338867s
+
+gen b vector timer (GPU): 0.00000409599998966s
+
+steepest_descent timer (GPU): 0.03938880157470703s, iter: 120
+
+precision linear system is save into `./result.txt`.
+
+
+=== main_cu 4000 ===
+
+gen SPD timer: 0.71549889500602148s
+
+gen b vector timer: 0.00005907699232921s
+
+steepest_descent timer (GPU): 0.43392482600756921s, iter: 124
+
+precision linear system is save into `./result.txt`.
+
+
+=== main_netlib 4000 ===
+
+gen SPD timer: 36.87326338500133716s
+
+gen b vector timer: 0.00001589697785676s
+
+steepest_descent timer: 1.09133232699241489s, iter: 124
+
+precision linear system is save into `./result.txt`.
+
+=== main_oneMKL 4000 ===
+
+gen SPD timer: 0.59017817399580963s
+
+gen b vector timer: 0.00001959799556062s
+
+steepest_descent timer: 0.75836764500127174s, iter: 124
+
+precision linear system is save into `./result.txt`.
+
+=== main_oneMKL_one_thread_process 4000 ===
+
+gen SPD timer: 2.05981241501285695s
+
+gen b vector timer: 0.00001956699998118s
+
+steepest_descent timer: 0.76124984698253684s, iter: 122
+
+precision linear system is save into `./result.txt`.
+
+=== main_openblas 4000 ===
+
+gen SPD timer: 0.62408082198817283s
+
+gen b vector timer: 0.00002635602140799s
+
+steepest_descent timer: 0.98907457900349982s, iter: 124
+
+precision linear system is save into `./result.txt`.
+
+=== main_openblas_one_thread_process 4000 ===
+
+gen SPD timer: 2.06177677298546769s
+
+gen b vector timer: 0.00001949301804416s
+
+steepest_descent timer: 1.03968618699582294s, iter: 123
+
+precision linear system is save into `./result.txt`.
+
+=== main_optimize 4000 ===
+
+gen SPD timer (GPU): 0.44517929077148438s
+
+gen b vector timer (GPU): 0.00004979199916124s
+
+steepest_descent timer (GPU): 0.10593577575683594s, iter: 124
+
+precision linear system is save into `./result.txt`.
+
+

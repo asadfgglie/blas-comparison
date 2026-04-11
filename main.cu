@@ -117,7 +117,7 @@ int main(int const argc, char **argv) {
         printf("SPD A matrix:\n");
         d_print_SPD_matrix(A, n);
     }
-    printf("\ngen SPD timer: %.5fs\n", end_gen_SPD - start_gen_SPD);
+    printf("\ngen SPD timer: %.17fs\n", end_gen_SPD - start_gen_SPD);
 
     double const start_gen_vec = timer();
     auto *b = static_cast<double *>(malloc(sizeof(double) * n));
@@ -127,7 +127,7 @@ int main(int const argc, char **argv) {
         printf("\nb vector:\n");
         d_print_vec(b, n);
     }
-    printf("\ngen b vector timer: %.5fs\n", end_gen_vec - start_gen_vec);
+    printf("\ngen b vector timer: %.17fs\n", end_gen_vec - start_gen_vec);
 
     auto *x = static_cast<double *>(malloc(sizeof(double) * n));
 
@@ -138,7 +138,7 @@ int main(int const argc, char **argv) {
         printf("\nsol. x vector:\n");
         d_print_vec(x, n);
     }
-    printf("\nsteepest_descent timer (GPU): %.5fs, iter: %lld\n", end - start, iter);
+    printf("\nsteepest_descent timer (GPU): %.17fs, iter: %lld\n", end - start, iter);
 
     d_save_SPD_system(A, n, b, x, filename);
     printf("\nprecision linear system is save into `%s`.\n", filename);
