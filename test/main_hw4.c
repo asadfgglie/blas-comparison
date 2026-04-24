@@ -3,7 +3,7 @@
 #include <time.h>
 #include <mkl.h>
 #include <sys/time.h>
-// CSR format structure
+// CSR/CSC format structure
 typedef struct {
     MKL_INT m;
     MKL_INT n;
