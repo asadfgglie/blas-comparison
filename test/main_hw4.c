@@ -160,7 +160,7 @@ int main() {
                 // CSR Format
                 run_benchmark(m, n_A, k, 1);
                 // CSC Format
-                // run_benchmark(m, n_A, k, 0); // uncomment to test CSC
+                run_benchmark(m, n_A, k, 0);
             }
         }
     }
