@@ -11,91 +11,70 @@ typedef struct {
     int n;
     int nnz;
     float *values;
-    long long *col_indices;
-    long long *row_ptr;
-} CSRMatrix;
-// CSC format structure
-typedef struct {
-    int m;
-    int n;
-    int nnz;
-    float *values;
-    long long *row_indices;
-    long long *col_ptr;
-} CSCMatrix;
+    long long *indices;
+    long long *ptr;
+    int is_csr; // 1 if is csr, 0 if is csc
+} Matrix;
 double get_time() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (double)tv.tv_sec + (double)tv.tv_usec * 1e-6;
 }
 // TODO: Implement your custom CSR matrix multiplication here
-void custom_csr_mm(const CSRMatrix *A, const float *B, float *C, int k) {
+void custom_csr_mm(const Matrix *A, const float *B, float *C, int k) {
     // Student to implement
     // C = A * B
 }
 // TODO: Implement your custom CSC matrix multiplication here
-void custom_csc_mm(const CSCMatrix *A, const float *B, float *C, int k) {
+void custom_csc_mm(const Matrix *A, const float *B, float *C, int k) {
     // Student to implement
     // C = A * B
 }
-void generate_random_csr(CSRMatrix *A, int m, int n, int target_nnz) {
+void generate_random_matrix(Matrix *A, int m, int n, int target_nnz, int is_csr) {
     A->m = m;
     A->n = n;
     A->nnz = target_nnz;
     A->values = (float *)malloc(target_nnz * sizeof(float));
-    A->col_indices = (long long *)malloc(target_nnz * sizeof(long long));
-    A->row_ptr = (long long *)calloc(m + 1, sizeof(long long));
+    A->indices = (long long *)malloc(target_nnz * sizeof(long long));
+    A->ptr = (long long *)calloc(m + 1, sizeof(long long));
     // Simple random distribution of nnz across rows
-    int const nnz_per_row = target_nnz / m;
+    int const nnz_per_cr = target_nnz / m;
     int const remainder = target_nnz % m;
     int current_nnz = 0;
-    for (int i = 0; i < m; i++) {
-        A->row_ptr[i] = current_nnz;
-        int row_nnz = nnz_per_row + (i < remainder ? 1 : 0);
-        // To ensure we don't exceed columns, cap row_nnz to n
-        if (row_nnz > n) row_nnz = n;
-        for (int j = 0; j < row_nnz; j++) {
-            A->values[current_nnz] = rand() / (float)RAND_MAX;
-            A->col_indices[current_nnz] = (j * (n / row_nnz)) % n; // simplistic distinct columns
-            current_nnz++;
+    if (is_csr) {
+        for (int i = 0; i < m; i++) {
+            A->ptr[i] = current_nnz;
+            int row_nnz = nnz_per_cr + (i < remainder ? 1 : 0);
+            // To ensure we don't exceed columns, cap row_nnz to n
+            if (row_nnz > n) row_nnz = n;
+            for (int j = 0; j < row_nnz; j++) {
+                A->values[current_nnz] = rand() / (float)RAND_MAX;
+                A->indices[current_nnz] = (j * (n / row_nnz)) % n; // simplistic distinct columns
+                current_nnz++;
+            }
         }
     }
-    A->row_ptr[m] = current_nnz;
+    else {
+        for (int j = 0; j < n; j++) {
+            A->ptr[j] = current_nnz;
+            int col_nnz = nnz_per_cr + (j < remainder ? 1 : 0);
+            if (col_nnz > m) col_nnz = m;
+            for (int i = 0; i < col_nnz; i++) {
+                A->values[current_nnz] = rand() / (float)RAND_MAX;
+                A->indices[current_nnz] = (i * (m / col_nnz)) % m;
+                current_nnz++;
+            }
+        }
+    }
+    A->ptr[m] = current_nnz;
     // Fix actual nnz if capped
     A->nnz = current_nnz;
+    A->is_csr = is_csr;
 }
-void generate_random_csc(CSCMatrix *A, int m, int n, int target_nnz) {
-    A->m = m;
-    A->n = n;
-    A->nnz = target_nnz;
-    A->values = (float *)malloc(target_nnz * sizeof(float));
-    A->row_indices = (long long *)malloc(target_nnz * sizeof(long long));
-    A->col_ptr = (long long *)calloc(n + 1, sizeof(long long));
-    int nnz_per_col = target_nnz / n;
-    int remainder = target_nnz % n;
-    int current_nnz = 0;
-    for (int j = 0; j < n; j++) {
-        A->col_ptr[j] = current_nnz;
-        int col_nnz = nnz_per_col + (j < remainder ? 1 : 0);
-        if (col_nnz > m) col_nnz = m;
-        for (int i = 0; i < col_nnz; i++) {
-            A->values[current_nnz] = rand() / (float)RAND_MAX;
-            A->row_indices[current_nnz] = (i * (m / col_nnz)) % m;
-            current_nnz++;
-        }
-    }
-    A->col_ptr[n] = current_nnz;
-    A->nnz = current_nnz;
-}
-void free_csr(CSRMatrix *A) {
+void free_matrix(Matrix *A) {
     free(A->values);
-    free(A->col_indices);
-    free(A->row_ptr);
-}
-void free_csc(CSCMatrix *A) {
-    free(A->values);
-    free(A->row_indices);
-    free(A->col_ptr);
+    free(A->indices);
+    free(A->ptr);
 }
 void generate_dense(float *mat, int const row, int const col) {
     for (int i = 0; i < row * col; i++) {
@@ -111,13 +90,13 @@ void run_benchmark(int m, int n_A, int k, int use_csr) {
     float *C_custom = malloc(m * k * sizeof(float));
     generate_dense(B, n_A, k);
     double start, end;
+    Matrix A;
     if (use_csr) {
-        CSRMatrix A;
-        generate_random_csr(&A, m, n_A, target_nnz);
+        generate_random_matrix(&A, m, n_A, target_nnz, 1);
         // MKL CSR execution
         sparse_matrix_t mkl_A;
         mkl_sparse_s_create_csr(&mkl_A, SPARSE_INDEX_BASE_ZERO, A.m, A.n, 
-                                A.row_ptr, A.row_ptr + 1, A.col_indices, A.values);
+                                A.ptr, A.ptr + 1, A.indices, A.values);
         struct matrix_descr descr;
         descr.type = SPARSE_MATRIX_TYPE_GENERAL;
         mkl_sparse_optimize(mkl_A);
@@ -132,14 +111,13 @@ void run_benchmark(int m, int n_A, int k, int use_csr) {
         custom_csr_mm(&A, B, C_custom, k);
         end = get_time();
         printf("Custom CSR Time: %f s\n", end - start);
-        free_csr(&A);
+        free_matrix(&A);
     } else {
-        CSCMatrix A;
-        generate_random_csc(&A, m, n_A, target_nnz);
+        generate_random_matrix(&A, m, n_A, target_nnz, 0);
         // MKL CSC execution
         sparse_matrix_t mkl_A;
         mkl_sparse_s_create_csc(&mkl_A, SPARSE_INDEX_BASE_ZERO, A.m, A.n, 
-                                A.col_ptr, A.col_ptr + 1, A.row_indices, A.values);
+                                A.ptr, A.ptr + 1, A.indices, A.values);
         struct matrix_descr descr;
         descr.type = SPARSE_MATRIX_TYPE_GENERAL;
         mkl_sparse_optimize(mkl_A);
@@ -154,7 +132,7 @@ void run_benchmark(int m, int n_A, int k, int use_csr) {
         custom_csc_mm(&A, B, C_custom, k);
         end = get_time();
         printf("Custom CSC Time: %f s\n", end - start);
-        free_csc(&A);
+        free_matrix(&A);
     }
     free(B);
     free(C_mkl);
