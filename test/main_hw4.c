@@ -2,17 +2,15 @@
 #include <stdlib.h>
 #include <time.h>
 #include <mkl.h>
-#include <omp.h>
-#include <math.h>
 #include <sys/time.h>
 // CSR format structure
 typedef struct {
-    int m;
-    int n;
+    MKL_INT m;
+    MKL_INT n;
     int nnz;
     float *values;
-    long long *indices;
-    long long *ptr;
+    MKL_INT *indices;
+    MKL_INT *ptr;
     int is_csr; // 1 if is csr, 0 if is csc
 } Matrix;
 double get_time() {
@@ -35,11 +33,14 @@ void generate_random_matrix(Matrix *A, int m, int n, int target_nnz, int is_csr)
     A->n = n;
     A->nnz = target_nnz;
     A->values = (float *)malloc(target_nnz * sizeof(float));
-    A->indices = (long long *)malloc(target_nnz * sizeof(long long));
-    A->ptr = (long long *)calloc(m + 1, sizeof(long long));
-    // Simple random distribution of nnz across rows
-    int const nnz_per_cr = target_nnz / m;
-    int const remainder = target_nnz % m;
+    A->indices = (MKL_INT *)malloc(target_nnz * sizeof(MKL_INT));
+
+    int dim = is_csr ? m : n;
+    A->ptr = (MKL_INT *)calloc(dim + 1, sizeof(MKL_INT));
+
+    // Simple random distribution of nnz across rows or cols
+    int const nnz_per_cr = target_nnz / dim;
+    int const remainder = target_nnz % dim;
     int current_nnz = 0;
     if (is_csr) {
         for (int i = 0; i < m; i++) {
@@ -66,7 +67,8 @@ void generate_random_matrix(Matrix *A, int m, int n, int target_nnz, int is_csr)
             }
         }
     }
-    A->ptr[m] = current_nnz;
+    A->ptr[dim] = current_nnz;
+
     // Fix actual nnz if capped
     A->nnz = current_nnz;
     A->is_csr = is_csr;
