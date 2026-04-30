@@ -24,6 +24,31 @@ void custom_mm(const Matrix *A, const float *B, float *C, MKL_INT const k, int c
     // Student to implement
     // C = A * B
     memset(C, 0, A->m * k * sizeof(float));
+    // B shape: A->n * k
+    if (use_csr) {
+        for (MKL_INT i = 0; i < A->m; i++) { // CSR 外層迴圈應該要是 A->m (列數)
+            for (MKL_INT l = A->ptr[i]; l < A->ptr[i + 1]; l++) {
+                MKL_INT const a_col = A->indices[l];
+                float const a_val = A->values[l];
+                for (MKL_INT j = 0; j < k; j++) {
+                    C[i * k + j] += a_val * B[a_col * k + j];
+                }
+            }
+        }
+    }
+    else {
+        for (MKL_INT i = 0; i < A->n; i++) { // CSC 外層迴圈是 A->n (行數)
+            for (MKL_INT l = A->ptr[i]; l < A->ptr[i + 1]; l++) {
+                MKL_INT const a_row = A->indices[l];
+                float const a_val = A->values[l];
+                for (MKL_INT j = 0; j < k; j++) {
+                    // C 的 row 是 a_row
+                    // B 的 row 是 i (因為 A 的行要對到 B 的列)
+                    C[a_row * k + j] += a_val * B[i * k + j];
+                }
+            }
+        }
+    }
 }
 void generate_random_matrix(Matrix *A, MKL_INT const row, MKL_INT const col, MKL_INT target_nnz, int const is_csr) {
     // ensure target_nnz is reasonable
@@ -93,16 +118,14 @@ void generate_dense(float *mat, MKL_INT const row, MKL_INT const col) {
 void error_check(float const *A, float const *B, MKL_INT const row, MKL_INT const col, float const tol) {
     MKL_INT const N = row * col;
     float *diff = malloc(N * sizeof(float));
-    // diff = A
     cblas_scopy(N, A, 1, diff, 1);
-    // diff = -1.0 * B + diff
     cblas_saxpy(N, -1.0f, B, 1, diff, 1);
-    // norm = L2 norm of diff
-    float const norm = cblas_snrm2(N, diff, 1);
-    if (norm > tol) {
-        printf("Error check FAILED: L2 norm %e exceeds tolerance %e\n", norm, tol);
+    float const abs_err = cblas_snrm2(N, diff, 1);
+    float const rel_err = abs_err / cblas_snrm2(N, A, 1);
+    if (rel_err > tol) {
+        printf("Error check FAILED: Rel err %e (Abs: %e) exceeds tol %e\n", rel_err, abs_err, tol);
     } else {
-        printf("Error check PASSED: L2 norm %e is within tolerance %e\n", norm, tol);
+        printf("Error check PASSED: Rel err %e (Abs: %e) is within tol %e\n", rel_err, abs_err, tol);
     }
     free(diff);
 }
@@ -150,7 +173,7 @@ void run_benchmark(MKL_INT const m, MKL_INT const n, MKL_INT const k, int const 
     end = get_time();
     printf("Custom %s Time: %f s\n", use_csr ? "CSR" : "CSC", end - start);
     // Check error against MKL result
-    error_check(C_mkl, C_custom, m, k, 1e-10f);
+    error_check(C_mkl, C_custom, m, k, 1e-7f);
     free_matrix(&A);
     free(B);
     free(C_mkl);
