@@ -19,7 +19,6 @@ double get_time() {
     gettimeofday(&tv, NULL);
     return (double)tv.tv_sec + (double)tv.tv_usec * 1e-6;
 }
-// TODO: Implement your custom CSR/CSC matrix multiplication here
 void custom_mm(const Matrix *A, const float *B, float *C, MKL_INT const k, int const use_csr) {
     // Student to implement
     // C = A * B
@@ -153,7 +152,7 @@ void run_benchmark(MKL_INT const m, MKL_INT const n, MKL_INT const k, int const 
         mkl_sparse_s_mm(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f, mkl_A, descr, 
                         SPARSE_LAYOUT_ROW_MAJOR, B, k, k, 0.0f, C_mkl, k);
         end = get_time();
-        printf("MKL CSR Time: %f s\n", end - start);
+        printf("MKL CSR Time:\t\t%f s\n", end - start);
         mkl_sparse_destroy(mkl_A);
     } else {
         // MKL CSC execution
@@ -164,14 +163,14 @@ void run_benchmark(MKL_INT const m, MKL_INT const n, MKL_INT const k, int const 
         mkl_sparse_s_mm(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f, mkl_A, descr, 
                         SPARSE_LAYOUT_ROW_MAJOR, B, k, k, 0.0f, C_mkl, k);
         end = get_time();
-        printf("MKL CSC Time: %f s\n", end - start);
+        printf("MKL CSC Time:\t\t%f s\n", end - start);
         mkl_sparse_destroy(mkl_A);
     }
     // Custom CSR/CSC execution
     start = get_time();
     custom_mm(&A, B, C_custom, k, use_csr);
     end = get_time();
-    printf("Custom %s Time: %f s\n", use_csr ? "CSR" : "CSC", end - start);
+    printf("Custom %s Time:\t%f s\n", use_csr ? "CSR" : "CSC", end - start);
     // Check error against MKL result
     error_check(C_mkl, C_custom, m, k, 1e-7f);
     free_matrix(&A);
