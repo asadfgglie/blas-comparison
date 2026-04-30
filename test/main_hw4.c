@@ -20,7 +20,6 @@ double get_time() {
     return (double)tv.tv_sec + (double)tv.tv_usec * 1e-6;
 }
 void custom_mm(const Matrix *A, const float *B, float *C, MKL_INT const k, int const use_csr) {
-    // Student to implement
     // C = A * B
     memset(C, 0, A->m * k * sizeof(float));
     // B shape: A->n * k
@@ -146,6 +145,9 @@ void run_benchmark(MKL_INT const m, MKL_INT const n, MKL_INT const k, int const 
         // MKL CSR execution
         mkl_sparse_s_create_csr(&mkl_A, SPARSE_INDEX_BASE_ZERO, A.m, A.n, 
                                 A.ptr, A.ptr + 1, A.indices, A.values);
+        mkl_sparse_set_mm_hint(mkl_A, SPARSE_OPERATION_NON_TRANSPOSE, descr,
+            SPARSE_LAYOUT_ROW_MAJOR, k, 10000000);
+        mkl_sparse_set_memory_hint(mkl_A, SPARSE_MEMORY_AGGRESSIVE);
         mkl_sparse_optimize(mkl_A);
         start = get_time();
         // https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-c/2025-2/mkl-sparse-mm.html
@@ -158,6 +160,9 @@ void run_benchmark(MKL_INT const m, MKL_INT const n, MKL_INT const k, int const 
         // MKL CSC execution
         mkl_sparse_s_create_csc(&mkl_A, SPARSE_INDEX_BASE_ZERO, A.m, A.n, 
                                 A.ptr, A.ptr + 1, A.indices, A.values);
+        mkl_sparse_set_mm_hint(mkl_A, SPARSE_OPERATION_NON_TRANSPOSE, descr,
+            SPARSE_LAYOUT_ROW_MAJOR, k, 10000000);
+        mkl_sparse_set_memory_hint(mkl_A, SPARSE_MEMORY_AGGRESSIVE);
         mkl_sparse_optimize(mkl_A);
         start = get_time();
         mkl_sparse_s_mm(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f, mkl_A, descr, 
