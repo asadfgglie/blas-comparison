@@ -8,7 +8,7 @@
 typedef struct {
     MKL_INT m; // row
     MKL_INT n; // col
-    int nnz;
+    MKL_INT nnz;
     float *values;
     MKL_INT *indices;
     MKL_INT *ptr;
@@ -19,17 +19,13 @@ double get_time() {
     gettimeofday(&tv, NULL);
     return (double)tv.tv_sec + (double)tv.tv_usec * 1e-6;
 }
-// TODO: Implement your custom CSR matrix multiplication here
-void custom_csr_mm(const Matrix *A, const float *B, float *C, int k) {
+// TODO: Implement your custom CSR/CSC matrix multiplication here
+void custom_mm(const Matrix *A, const float *B, float *C, MKL_INT const k, int const use_csr) {
     // Student to implement
     // C = A * B
+    memset(C, 0, A->m * k * sizeof(float));
 }
-// TODO: Implement your custom CSC matrix multiplication here
-void custom_csc_mm(const Matrix *A, const float *B, float *C, int k) {
-    // Student to implement
-    // C = A * B
-}
-void generate_random_matrix(Matrix *A, int const row, int const col, int target_nnz, int const is_csr) {
+void generate_random_matrix(Matrix *A, MKL_INT const row, MKL_INT const col, MKL_INT target_nnz, int const is_csr) {
     // ensure target_nnz is reasonable
     target_nnz = target_nnz > row * col ? row * col : target_nnz;
     A->m = row;
@@ -39,21 +35,21 @@ void generate_random_matrix(Matrix *A, int const row, int const col, int target_
     A->indices = (MKL_INT *)malloc(target_nnz * sizeof(MKL_INT));
     A->is_csr = is_csr;
 
-    int const compressed_dim = is_csr ? row : col, other_dim = is_csr ? col : row;
+    MKL_INT const compressed_dim = is_csr ? row : col, other_dim = is_csr ? col : row;
     A->ptr = (MKL_INT *)calloc(compressed_dim + 1, sizeof(MKL_INT));
 
     // Simple random distribution of nnz across rows or cols
-    int const nnz_per_cr = target_nnz / compressed_dim, remainder = target_nnz % compressed_dim;
-    int current_nnz = 0;
-    int *usages = malloc(other_dim * sizeof(int));
+    MKL_INT const nnz_per_cr = target_nnz / compressed_dim, remainder = target_nnz % compressed_dim;
+    MKL_INT current_nnz = 0;
+    MKL_INT *usages = malloc(other_dim * sizeof(MKL_INT));
     if (is_csr) {
-        for (int i = 0; i < row; i++) {
+        for (MKL_INT i = 0; i < row; i++) {
             A->ptr[i] = current_nnz;
-            int const row_nnz = nnz_per_cr + (i < remainder ? 1 : 0);
-            memset(usages, 0, other_dim * sizeof(int));
-            for (int j = 0; j < row_nnz; j++) {
+            MKL_INT const row_nnz = nnz_per_cr + (i < remainder ? 1 : 0);
+            memset(usages, 0, other_dim * sizeof(MKL_INT));
+            for (MKL_INT j = 0; j < row_nnz; j++) {
                 A->values[current_nnz] = (float)rand() / (float)RAND_MAX;
-                int index = rand() % other_dim;
+                MKL_INT index = rand() % other_dim;
                 while (usages[index] > 0) {
                     index = rand() % other_dim;
                 }
@@ -64,13 +60,13 @@ void generate_random_matrix(Matrix *A, int const row, int const col, int target_
         }
     }
     else {
-        for (int j = 0; j < col; j++) {
+        for (MKL_INT j = 0; j < col; j++) {
             A->ptr[j] = current_nnz;
-            int const col_nnz = nnz_per_cr + (j < remainder ? 1 : 0);
-            memset(usages, 0, other_dim * sizeof(int));
-            for (int i = 0; i < col_nnz; i++) {
+            MKL_INT const col_nnz = nnz_per_cr + (j < remainder ? 1 : 0);
+            memset(usages, 0, other_dim * sizeof(MKL_INT));
+            for (MKL_INT i = 0; i < col_nnz; i++) {
                 A->values[current_nnz] = (float)rand() / (float)RAND_MAX;
-                int index = rand() % other_dim;
+                MKL_INT index = rand() % other_dim;
                 while (usages[index] > 0) {
                     index = rand() % other_dim;
                 }
@@ -89,18 +85,31 @@ void free_matrix(Matrix const *A) {
     free(A->indices);
     free(A->ptr);
 }
-void generate_dense(float *mat, int const row, int const col) {
-    if (mat == NULL) {
-        return;
-    }
-    for (int i = 0; i < row * col; i++) {
+void generate_dense(float *mat, MKL_INT const row, MKL_INT const col) {
+    for (MKL_INT i = 0; i < row * col; i++) {
         mat[i] = (float)rand() / (float)RAND_MAX;
     }
 }
-void run_benchmark(int const m, int const n, int const k, int const use_csr) {
-    int const target_nnz = 32 * m;
-    printf("\nBenchmarking: A(%d x %d), B(%d x %d), target_nnz=%d, format=%s\n", 
-           m, n, n, k, target_nnz, use_csr ? "CSR" : "CSC");
+void error_check(float const *A, float const *B, MKL_INT const row, MKL_INT const col, float const tol) {
+    MKL_INT const N = row * col;
+    float *diff = malloc(N * sizeof(float));
+    // diff = A
+    cblas_scopy(N, A, 1, diff, 1);
+    // diff = -1.0 * B + diff
+    cblas_saxpy(N, -1.0f, B, 1, diff, 1);
+    // norm = L2 norm of diff
+    float const norm = cblas_snrm2(N, diff, 1);
+    if (norm > tol) {
+        printf("Error check FAILED: L2 norm %e exceeds tolerance %e\n", norm, tol);
+    } else {
+        printf("Error check PASSED: L2 norm %e is within tolerance %e\n", norm, tol);
+    }
+    free(diff);
+}
+void run_benchmark(MKL_INT const m, MKL_INT const n, MKL_INT const k, int const use_csr) {
+    MKL_INT const target_nnz = 32 * m;
+    printf("\nBenchmarking: A(%lld x %lld), B(%lld x %lld), target_nnz=%lld, format=%s\n",
+           (long long)m, (long long)n, (long long)n, (long long)k, (long long)target_nnz, use_csr ? "CSR" : "CSC");
     float *B = malloc(n * k * sizeof(float));
     float *C_mkl = malloc(m * k * sizeof(float));
     float *C_custom = malloc(m * k * sizeof(float));
@@ -123,12 +132,6 @@ void run_benchmark(int const m, int const n, int const k, int const use_csr) {
         end = get_time();
         printf("MKL CSR Time: %f s\n", end - start);
         mkl_sparse_destroy(mkl_A);
-        // Custom CSR execution
-        start = get_time();
-        custom_csr_mm(&A, B, C_custom, k);
-        end = get_time();
-        printf("Custom CSR Time: %f s\n", end - start);
-        free_matrix(&A);
     } else {
         // MKL CSC execution
         mkl_sparse_s_create_csc(&mkl_A, SPARSE_INDEX_BASE_ZERO, A.m, A.n, 
@@ -140,35 +143,35 @@ void run_benchmark(int const m, int const n, int const k, int const use_csr) {
         end = get_time();
         printf("MKL CSC Time: %f s\n", end - start);
         mkl_sparse_destroy(mkl_A);
-        // Custom CSC execution
-        start = get_time();
-        custom_csc_mm(&A, B, C_custom, k);
-        end = get_time();
-        printf("Custom CSC Time: %f s\n", end - start);
-        free_matrix(&A);
     }
+    // Custom CSR/CSC execution
+    start = get_time();
+    custom_mm(&A, B, C_custom, k, use_csr);
+    end = get_time();
+    printf("Custom %s Time: %f s\n", use_csr ? "CSR" : "CSC", end - start);
+    // Check error against MKL result
+    error_check(C_mkl, C_custom, m, k, 1e-10f);
+    free_matrix(&A);
     free(B);
     free(C_mkl);
     free(C_custom);
 }
 int main() {
     srand(time(NULL));
-    int const n_vals[] = {2048, 32768}, k_vals[] = {64, 512};
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 2; j++) {
+    MKL_INT const n_vals[] = {2048, 32768}, k_vals[] = {64, 512};
+    for (MKL_INT i = 0; i < 2; i++) {
+        for (MKL_INT j = 0; j < 2; j++) {
             // Test 3 shapes for A: (n,n), (4n,n), (n,4n)
-            int const shapes[3][2] = {
+            MKL_INT const shapes[3][2] = {
                 {n_vals[i], n_vals[i]},
                 {4 * n_vals[i], n_vals[i]},
                 {n_vals[i], 4 * n_vals[i]}
             };
-            for (int s = 0; s < 3; s++) {
-                int const m = shapes[s][0];
-                int const n = shapes[s][1];
+            for (MKL_INT s = 0; s < 3; s++) {
                 // CSR Format
-                run_benchmark(m, n, k_vals[j], 1);
+                run_benchmark(shapes[s][0], shapes[s][1], k_vals[j], 1);
                 // CSC Format
-                run_benchmark(m, n, k_vals[j], 0);
+                run_benchmark(shapes[s][0], shapes[s][1], k_vals[j], 0);
             }
         }
     }
