@@ -2,11 +2,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include <mkl.h>
+#include <string.h>
 #include <sys/time.h>
 // CSR/CSC format structure
 typedef struct {
-    MKL_INT m;
-    MKL_INT n;
+    MKL_INT m; // row
+    MKL_INT n; // col
     int nnz;
     float *values;
     MKL_INT *indices;
@@ -28,50 +29,61 @@ void custom_csc_mm(const Matrix *A, const float *B, float *C, int k) {
     // Student to implement
     // C = A * B
 }
-void generate_random_matrix(Matrix *A, int m, int n, int target_nnz, int is_csr) {
-    A->m = m;
-    A->n = n;
+void generate_random_matrix(Matrix *A, int const row, int const col, int target_nnz, int const is_csr) {
+    // ensure target_nnz is reasonable
+    target_nnz = target_nnz > row * col ? row * col : target_nnz;
+    A->m = row;
+    A->n = col;
     A->nnz = target_nnz;
     A->values = (float *)malloc(target_nnz * sizeof(float));
     A->indices = (MKL_INT *)malloc(target_nnz * sizeof(MKL_INT));
+    A->is_csr = is_csr;
 
-    int dim = is_csr ? m : n;
+    int const dim = is_csr ? row : col;
     A->ptr = (MKL_INT *)calloc(dim + 1, sizeof(MKL_INT));
 
     // Simple random distribution of nnz across rows or cols
     int const nnz_per_cr = target_nnz / dim;
     int const remainder = target_nnz % dim;
     int current_nnz = 0;
+    int *usages = malloc(dim * sizeof(int));
     if (is_csr) {
-        for (int i = 0; i < m; i++) {
+        for (int i = 0; i < row; i++) {
             A->ptr[i] = current_nnz;
-            int row_nnz = nnz_per_cr + (i < remainder ? 1 : 0);
-            // To ensure we don't exceed columns, cap row_nnz to n
-            if (row_nnz > n) row_nnz = n;
+            int const row_nnz = nnz_per_cr + (i < remainder ? 1 : 0);
+            memset(usages, 0, dim * sizeof(int));
             for (int j = 0; j < row_nnz; j++) {
                 A->values[current_nnz] = rand() / (float)RAND_MAX;
-                A->indices[current_nnz] = (j * (n / row_nnz)) % n; // simplistic distinct columns
+                int index = rand() % dim;
+                while (usages[index] > 0) {
+                    index = rand() % dim;
+                }
+                usages[index]++;
+                A->indices[current_nnz] = index;
                 current_nnz++;
             }
         }
     }
     else {
-        for (int j = 0; j < n; j++) {
+        for (int j = 0; j < col; j++) {
             A->ptr[j] = current_nnz;
-            int col_nnz = nnz_per_cr + (j < remainder ? 1 : 0);
-            if (col_nnz > m) col_nnz = m;
+            int const col_nnz = nnz_per_cr + (j < remainder ? 1 : 0);
+            memset(usages, 0, dim * sizeof(int));
             for (int i = 0; i < col_nnz; i++) {
                 A->values[current_nnz] = rand() / (float)RAND_MAX;
-                A->indices[current_nnz] = (i * (m / col_nnz)) % m;
+                int index = rand() % dim;
+                while (usages[index] > 0) {
+                    index = rand() % dim;
+                }
+                usages[index]++;
+                A->indices[current_nnz] = index;
                 current_nnz++;
             }
         }
     }
     A->ptr[dim] = current_nnz;
 
-    // Fix actual nnz if capped
-    A->nnz = current_nnz;
-    A->is_csr = is_csr;
+    free(usages);
 }
 void free_matrix(Matrix *A) {
     free(A->values);
@@ -103,6 +115,7 @@ void run_benchmark(int m, int n_A, int k, int use_csr) {
         descr.type = SPARSE_MATRIX_TYPE_GENERAL;
         mkl_sparse_optimize(mkl_A);
         start = get_time();
+        // https://www.intel.com/content/www/us/en/docs/onemkl/developer-reference-c/2025-2/mkl-sparse-mm.html
         mkl_sparse_s_mm(SPARSE_OPERATION_NON_TRANSPOSE, 1.0f, mkl_A, descr, 
                         SPARSE_LAYOUT_ROW_MAJOR, B, k, k, 0.0f, C_mkl, k);
         end = get_time();
