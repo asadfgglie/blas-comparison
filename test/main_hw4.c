@@ -118,72 +118,6 @@ void error_check(float const *A, float const *B, MKL_INT const row, MKL_INT cons
         printf("Error check PASSED: Max Rel Err %e is within tol %e\n", rel_err_inf, (double)tol);
     }
 }
-void save_result(Matrix const A, float const *B, float const *C_custom, float const *C_mkl, MKL_INT const k, char const *filename) {
-    FILE *fp = fopen(filename, "w");
-    if (!fp) {
-        printf("Error: Cannot open file %s\n", filename);
-        return;
-    }
-    fprintf(fp, "=================================================\n");
-    fprintf(fp, "A: m=%lld, n=%lld, nnz=%lld, is_csr=%d, k=%lld\n", (long long)A.m, (long long)A.n, (long long)A.nnz, A.is_csr, (long long)k);
-
-    // 只印出左上角 10x10 的子矩陣，以避免檔案過大 (如果原始矩陣太大)
-    MKL_INT print_m = A.m > 10 ? 10 : A.m;
-    MKL_INT print_n = A.n > 10 ? 10 : A.n;
-    MKL_INT print_k = k > 10 ? 10 : k;
-
-    // 將 A 轉換成 Dense 的 10x10 方便觀察
-    fprintf(fp, "\n--- Top-Left %lldx%lld of Dense A ---\n", (long long)print_m, (long long)print_n);
-    float *dense_A = calloc(print_m * print_n, sizeof(float));
-    if (A.is_csr) {
-        for (MKL_INT i = 0; i < print_m; i++) {
-            for (MKL_INT l = A.ptr[i]; l < A.ptr[i + 1]; l++) {
-                MKL_INT col = A.indices[l];
-                if (col < print_n) dense_A[i * print_n + col] = A.values[l];
-            }
-        }
-    } else {
-        for (MKL_INT j = 0; j < print_n; j++) {
-            for (MKL_INT l = A.ptr[j]; l < A.ptr[j + 1]; l++) {
-                MKL_INT row = A.indices[l];
-                if (row < print_m) dense_A[row * print_n + j] = A.values[l];
-            }
-        }
-    }
-    for (MKL_INT i = 0; i < print_m; i++) {
-        for (MKL_INT j = 0; j < print_n; j++) {
-            fprintf(fp, "%8.4f ", dense_A[i * print_n + j]);
-        }
-        fprintf(fp, "\n");
-    }
-    free(dense_A);
-
-    fprintf(fp, "\n--- Top-Left %lldx%lld of B ---\n", (long long)print_n, (long long)print_k);
-    for (MKL_INT i = 0; i < print_n; i++) {
-        for (MKL_INT j = 0; j < print_k; j++) {
-            fprintf(fp, "%8.4f ", B[i * k + j]);
-        }
-        fprintf(fp, "\n");
-    }
-
-    fprintf(fp, "\n--- Top-Left %lldx%lld of C_custom ---\n", (long long)print_m, (long long)print_k);
-    for (MKL_INT i = 0; i < print_m; i++) {
-        for (MKL_INT j = 0; j < print_k; j++) {
-            fprintf(fp, "%8.4f ", C_custom[i * k + j]);
-        }
-        fprintf(fp, "\n");
-    }
-
-    fprintf(fp, "\n--- Top-Left %lldx%lld of C_mkl ---\n", (long long)print_m, (long long)print_k);
-    for (MKL_INT i = 0; i < print_m; i++) {
-        for (MKL_INT j = 0; j < print_k; j++) {
-            fprintf(fp, "%8.4f ", C_mkl[i * k + j]);
-        }
-        fprintf(fp, "\n");
-    }
-    fprintf(fp, "\n");
-    fclose(fp);
-}
 void run_benchmark(MKL_INT const m, MKL_INT const n, MKL_INT const k, int const use_csr) {
     MKL_INT const target_nnz = 32 * m;
     printf("\nBenchmarking: A(%lld x %lld), B(%lld x %lld), target_nnz=%lld, format=%s\n",
@@ -230,7 +164,6 @@ void run_benchmark(MKL_INT const m, MKL_INT const n, MKL_INT const k, int const 
     end = get_time();
     printf("Custom %s Time:\t%f s\n", use_csr ? "CSR" : "CSC", end - start);
     error_check(C_mkl, C_custom, m, k, 1e-7f);
-    // save_result(A, B, C_custom, C_mkl, k, "/home/asadfgglie/blas-test/test/result.txt");
     free_matrix(&A); mkl_free(B); mkl_free(C_mkl); mkl_free(C_custom);
 }
 int main() {
