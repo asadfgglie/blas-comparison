@@ -52,4 +52,4 @@ add_executable(main_optimize main_optimize.cu utils.c utils.h)
 target_link_libraries(main_optimize PUBLIC openblas cublas curand)
 target_compile_definitions(main_optimize PRIVATE USE_OPENBLAS)
 
-add_subdirectory(test)
+add_subdirectory(hw4)
