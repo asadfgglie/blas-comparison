@@ -4,6 +4,7 @@
 #include <mkl.h>
 #include <string.h>
 #include <sys/time.h>
+#include <math.h>
 #ifdef USE_OMP
 #include <omp.h>
 #endif
@@ -35,11 +36,15 @@ void custom_mm(const Matrix *A, const float *B, float *C, MKL_INT const k, int c
 #ifdef USE_OMP
         #pragma omp parallel for default(none) shared(A, B, C, k) schedule(static)
 #endif
-        for (MKL_INT j = 0; j < k; j++) {
-            for (MKL_INT i = 0; i < A->n; i++) {
-                for (MKL_INT l = A->ptr[i]; l < A->ptr[i + 1]; l++) {
-                    MKL_INT const a_row = A->indices[l]; float const a_val = A->values[l];
-                    C[a_row * k + j] += a_val * B[i * k + j];
+        for (MKL_INT i = 0; i < A->n; i++) {
+            for (MKL_INT l = A->ptr[i]; l < A->ptr[i + 1]; l++) {
+                MKL_INT const a_row = A->indices[l]; float const a_val = A->values[l];
+                float *c_row_ptr = &C[a_row * k]; const float *b_row_ptr = &B[i * k];
+                for (MKL_INT j = 0; j < k; j++) {
+#ifdef USE_OMP
+                    #pragma omp atomic
+#endif
+                    c_row_ptr[j] += a_val * b_row_ptr[j];
                 }
             }
         }
@@ -95,15 +100,23 @@ void generate_dense(float *mat, MKL_INT const row, MKL_INT const col) {
     for (MKL_INT i = 0; i < row * col; i++) { mat[i] = (float)rand() / (float)RAND_MAX; }
 }
 void error_check(float const *A, float const *B, MKL_INT const row, MKL_INT const col, float const tol) {
-    MKL_INT const N = row * col; float *diff = malloc(N * sizeof(float));
-    cblas_scopy(N, A, 1, diff, 1); cblas_saxpy(N, -1.0f, B, 1, diff, 1);
-    float const abs_err = cblas_snrm2(N, diff, 1), rel_err = abs_err / cblas_snrm2(N, A, 1);
-    if (rel_err > tol) {
-        printf("Error check FAILED: Rel err %e (Abs: %e) exceeds tol %e\n", rel_err, abs_err, tol);
-    } else {
-        printf("Error check PASSED: Rel err %e (Abs: %e) is within tol %e\n", rel_err, abs_err, tol);
+    MKL_INT const N = row * col;
+    double max_abs_err = 0.0, max_val = 0.0, sum_sq_diff = 0.0, sum_sq_ref = 0.0;
+    for (MKL_INT i = 0; i < N; i++) {
+        double const diff = (double)A[i] - (double)B[i], abs_diff = fabs(diff), ref_val = fabs(A[i]);
+        if (abs_diff > max_abs_err) { max_abs_err = abs_diff; }
+        if (ref_val > max_val) { max_val = ref_val; }
+        sum_sq_diff += diff * diff; sum_sq_ref += (double)A[i] * (double)A[i];
     }
-    free(diff);
+    double const rel_err_inf = max_abs_err / (max_val + 1e-15),
+        rel_err_l2 = sqrt(sum_sq_diff) / sqrt(sum_sq_ref + 1e-15);
+    if (rel_err_inf > (double)tol) {
+        printf("Error check FAILED:\n");
+        printf("  Max Rel Err (Inf-Norm): %e\n", rel_err_inf);
+        printf("  RMS Rel Err (L2-Norm):  %e\n", rel_err_l2);
+    } else {
+        printf("Error check PASSED: Max Rel Err %e is within tol %e\n", rel_err_inf, (double)tol);
+    }
 }
 void save_result(Matrix const A, float const *B, float const *C_custom, float const *C_mkl, MKL_INT const k, char const *filename) {
     FILE *fp = fopen(filename, "w");
